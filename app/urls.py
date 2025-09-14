@@ -16,10 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from rest_framework.routers import DefaultRouter
-from django.urls import path
+from django.urls import include, path
+from coffeehub.api import ProductsViewSet
 from coffeehub import views
 router = DefaultRouter()
-router.register("products",ProductViewSet,basename = "products")
+router.register("products",ProductsViewSet,basename = "products")
 urlpatterns = [
     path('',views.ShowProductView.as_view()),
     path('admin/', admin.site.urls),
