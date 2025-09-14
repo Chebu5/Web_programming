@@ -17,10 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from rest_framework.routers import DefaultRouter
 from django.urls import include, path
-from coffeehub.api import ProductsViewSet
+from coffeehub.api import *
 from coffeehub import views
 router = DefaultRouter()
 router.register("products",ProductsViewSet,basename = "products")
+router.register("categories",CategoriesViewSet,basename = "categories")
 urlpatterns = [
     path('',views.ShowProductView.as_view()),
     path('admin/', admin.site.urls),
