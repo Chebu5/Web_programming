@@ -1,12 +1,57 @@
 from rest_framework import serializers
-from coffeehub.models import *
+from .models import *
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = "__all__"
+        fields = '__all__'
+
 class ProductSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    
     class Meta:
         model = Product
-        fields = ['id','name','price','category' ]
+        fields = '__all__'
+        read_only_fields = ['is_available']
+
+class IngredientSerializer(serializers.ModelSerializer):
+    unit_display = serializers.CharField(source='get_unit_display', read_only=True)
+    is_low_stock = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = Ingredient
+        fields = '__all__'
+
+class ProductCompositionSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    ingredient_name = serializers.CharField(source='ingredient.name', read_only=True)
+    
+    class Meta:
+        model = ProductComposition
+        fields = '__all__'
+
+class ProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.CharField(source='user.email', read_only=True)
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+    
+    class Meta:
+        model = Profile
+        fields = '__all__'
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    total_price = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = OrderItem
+        fields = '__all__'
+
+class OrderSerializer(serializers.ModelSerializer):
+    user_username = serializers.CharField(source='user.username', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    items = OrderItemSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Order
+        fields = '__all__'

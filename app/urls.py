@@ -20,8 +20,13 @@ from django.urls import include, path
 from coffeehub.api import *
 from coffeehub import views
 router = DefaultRouter()
-router.register("products",ProductsViewSet,basename = "products")
-router.register("categories",CategoriesViewSet,basename = "categories")
+router.register('categories', CategoriesViewSet)
+router.register('products', ProductsViewSet)
+router.register('ingredients', IngredientsViewSet)
+router.register('compositions', ProductCompositionsViewSet)
+router.register('profiles', ProfilesViewSet)
+router.register('orders', OrdersViewSet)
+router.register('order-items', OrderItemsViewSet)
 urlpatterns = [
     path('',views.ShowProductView.as_view()),
     path('admin/', admin.site.urls),
