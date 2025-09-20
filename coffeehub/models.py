@@ -101,23 +101,8 @@ class ProductComposition(models.Model):
 
 # Профиль пользователя
 class Profile(models.Model):
-    ROLE_CHOICES = (
-        ('customer', 'Клиент'),
-        ('barista', 'Бариста'),
-        ('admin', 'Администратор'),
-    )
-    
-    user = models.OneToOneField(
-        User, 
-        on_delete=models.CASCADE,
-        verbose_name='Пользователь'
-    )
-    role = models.CharField(
-        max_length=10, 
-        choices=ROLE_CHOICES, 
-        default='customer',
-        verbose_name='Роль'
-    )
+    name = models.TextField("Имя", null=True)
+    last_name = models.TextField("Фамилия",null=True)
     phone_number = models.CharField(
         max_length=15, 
         blank=True, 
@@ -127,9 +112,6 @@ class Profile(models.Model):
     class Meta:
         verbose_name = 'Профиль'
         verbose_name_plural = 'Профили'
-    
-    def __str__(self):
-        return f"{self.user.username} ({self.get_role_display()})"
 
 # Заказы
 class Order(models.Model):
@@ -141,7 +123,7 @@ class Order(models.Model):
     )
     
     user = models.ForeignKey(
-        User, 
+        Profile, 
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
         related_name='orders'

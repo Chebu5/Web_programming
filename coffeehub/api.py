@@ -70,7 +70,7 @@ class ProductCompositionsViewSet(mixins.CreateModelMixin,
         return queryset
 
 # Профили пользователей
-class ProfilesViewSet(mixins.RetrieveModelMixin,
+class ProfilesViewSet(mixins.CreateModelMixin,mixins.RetrieveModelMixin,mixins.DestroyModelMixin,
                      mixins.UpdateModelMixin,
                      mixins.ListModelMixin,
                      GenericViewSet):
@@ -92,7 +92,7 @@ class ProfilesViewSet(mixins.RetrieveModelMixin,
 class OrdersViewSet(mixins.CreateModelMixin,
                    mixins.UpdateModelMixin,
                    mixins.RetrieveModelMixin,
-                   mixins.ListModelMixin,
+                   mixins.ListModelMixin,mixins.DestroyModelMixin,
                    GenericViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
