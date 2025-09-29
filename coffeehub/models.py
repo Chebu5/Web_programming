@@ -25,7 +25,7 @@ class Product(models.Model):
         null=True,
         verbose_name='Категория'
     )
-    
+    picture = models.ImageField("Изображение", null=True, upload_to="products")
     class Meta:
         verbose_name = 'Продукт'
         verbose_name_plural = 'Продукты'
@@ -61,7 +61,7 @@ class Ingredient(models.Model):
         default=0,
         verbose_name='Минимальный запас'
     )
-    
+    picture = models.ImageField("Изображение", null=True, upload_to="ingredients")
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'

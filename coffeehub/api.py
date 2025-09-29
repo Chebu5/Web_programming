@@ -5,7 +5,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from coffeehub.models import *
 from coffeehub.serializers import *
-
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework import viewsets
 # Категории
 class CategoriesViewSet(mixins.ListModelMixin,
                        mixins.RetrieveModelMixin,
@@ -25,7 +26,7 @@ class ProductsViewSet(mixins.CreateModelMixin,
                      GenericViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    
+    parser_classes = (MultiPartParser, FormParser)
     @action(detail=True, methods=['post'])
     def toggle_availability(self, request, pk=None):
         """Переключение доступности продукта"""
@@ -43,7 +44,7 @@ class IngredientsViewSet(mixins.CreateModelMixin,
                         GenericViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    
+    parser_classes = (MultiPartParser, FormParser)
     @action(detail=False, methods=['get'])
     def low_stock(self, request):
         """Список ингредиентов с низким запасом"""

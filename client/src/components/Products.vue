@@ -11,6 +11,8 @@ onBeforeMount(() => {
 })
 const productToAdd = ref({});
 const productToEdit = ref({});
+const productsPictureRef = ref();
+const productAddImageUrl = ref();
 async function fetchProducts() {
     //loading.value = true;
     const r = await axios.get("api/products");
@@ -30,10 +32,26 @@ onBeforeMount(async()=>{
     await fetchCategories();
 })
 async function onProductAdd() {
-  await axios.post("/api/products/", {
-    ...productToAdd.value,
+  const formData = new FormData();
+  formData.append('picture',productsPictureRef.value.files[0]);
+  formData.set('name',productToAdd.value.name)
+  formData.set('category',productToAdd.value.category)
+  formData.set('price',productToAdd.value.price)
+  await axios.post("/api/products/",formData, {
+    headers:{
+      'Content-Type':'multipart/form-data'
+    }
   });
   await fetchProducts();
+}
+async function productAddPictureChange() {
+  productAddImageUrl.value = URL.createObjectURL(productsPictureRef.value.files[0])
+}
+const newPictureFile = ref(null); // выбранный файл для замены картинки
+
+function onEditPictureChange(event) {
+  const file = event.target.files[0];
+  newPictureFile.value = file;
 }
 async function onProductEditClick(products) {
   productToEdit.value = { ...products };
@@ -43,9 +61,20 @@ async function onRemoveClick(products) {
   await fetchProducts(); // переподтягиваю
 }
 async function onUpdateProduct() {
-  await axios.put(`/api/products/${productToEdit.value.id}/`, {
-    ...productToEdit.value,
+  const formData = new FormData();
+  formData.set('name', productToEdit.value.name);
+  formData.set('category', productToEdit.value.category);
+  formData.set('price', productToEdit.value.price);
+
+  if (newPictureFile.value) {
+    formData.append('picture', newPictureFile.value);
+  }
+
+  await axios.put(`/api/products/${productToEdit.value.id}/`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   });
+
+  newPictureFile.value = null; // очистить выбранный файл после обновления
   await fetchProducts();
 }
 
@@ -66,6 +95,12 @@ async function onUpdateProduct() {
           />
           <label for="productName">Название</label>
         </div>
+      </div>
+      <div class="col-auto">
+        <input class="form-control" type="file" ref="productsPictureRef" @change="productAddPictureChange"></input>
+      </div>
+      <div class="col-auto">
+        <img :src="productAddImageUrl" style="max-height: 60px;" alt=""></img>
       </div>
       <div class="col-auto">
         <div class="form-floating">
@@ -111,6 +146,7 @@ async function onUpdateProduct() {
       <div class="product-info flex-grow-1">
         <div class="fw-bold">{{ product.name }}</div>
         <div class="fw-bold">{{ product.price }} - руб</div>
+        <div v-show="product.picture"><img :src="product.picture" style="max-height: 60px;"></div>
       </div>
       <div class="product-actions ms-3">
         <button
@@ -156,6 +192,19 @@ async function onUpdateProduct() {
                   placeholder="Название продукта"
                 />
                 <label for="editProductName">Название</label>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-floating">
+                <input
+                  type="file"
+                  class="form-control"
+                  id="editProductImage"
+                  ref="productsPictureEditRef"
+                  @change="onEditPictureChange"
+                />
+                <label for="editProductImage">Картинка</label>
+
               </div>
             </div>
             <div class="col-12">
