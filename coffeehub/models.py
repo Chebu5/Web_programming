@@ -101,6 +101,7 @@ class ProductComposition(models.Model):
 
 # Профиль пользователя
 class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE,null= True)
     name = models.TextField("Имя", null=True)
     last_name = models.TextField("Фамилия",null=True)
     phone_number = models.CharField(
@@ -121,7 +122,8 @@ class Order(models.Model):
         ('ready', 'Готов'),
         ('cancelled', 'Отменен'),
     )
-    
+    user_admin = models.ForeignKey("auth.User",on_delete=models.CASCADE,
+        verbose_name='Пользователь',null = True)
     user = models.ForeignKey(
         Profile, 
         on_delete=models.CASCADE,
@@ -152,8 +154,8 @@ class Order(models.Model):
         verbose_name_plural = 'Заказы'
         ordering = ['-created_at']
     
-    def __str__(self):
-        return f"Заказ #{self.id} - {self.user.username}"
+    # def __str__(self):
+    #     return f"Заказ #{self.id} - {self.user.username}"
 
 # Позиции в заказе
 class OrderItem(models.Model):

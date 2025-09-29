@@ -31,10 +31,7 @@ class ProductCompositionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProfileSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username', read_only=True)
-    email = serializers.CharField(source='user.email', read_only=True)
-    role_display = serializers.CharField(source='get_role_display', read_only=True)
-    
+    name = serializers.CharField(source='user.username', read_only=True)
     class Meta:
         model = Profile
         fields = '__all__'
@@ -51,7 +48,17 @@ class OrderSerializer(serializers.ModelSerializer):
     user_username = serializers.CharField(source='user.username', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     items = OrderItemSerializer(many=True, read_only=True)
-    
+    def create(self, validated_data): 
+        # когда в api создается сериалайзер, 
+        # то заполняется специальное поле сериалайзера которое называется context
+        # в него добавляется инфомрация по запросе, и доступна эта инфа
+        # через self.context['request'], в частности там есть информация о пользовате
+        if 'request' in self.context:
+            # заполняем validated_data который используется для создания сущности в БД
+            # данными из запроса
+            validated_data['user_admin'] = self.context['request'].user
+            
+        return super().create(validated_data)
     class Meta:
         model = Order
         fields = '__all__'

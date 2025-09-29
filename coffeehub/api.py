@@ -77,18 +77,12 @@ class ProfilesViewSet(mixins.CreateModelMixin,mixins.RetrieveModelMixin,mixins.D
                      GenericViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
-    
-    @action(detail=False, methods=['get'])
-    def by_role(self, request):
-        """Фильтрация профилей по роли"""
-        role = request.query_params.get('role')
-        if role:
-            profiles = Profile.objects.filter(role=role)
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return Profile.objects.all()
         else:
-            profiles = Profile.objects.all()
-        serializer = self.get_serializer(profiles, many=True)
-        return Response(serializer.data)
-
+            return Profile.objects.filter(user=user)
 # Заказы
 class OrdersViewSet(mixins.CreateModelMixin,
                    mixins.UpdateModelMixin,
@@ -97,7 +91,18 @@ class OrdersViewSet(mixins.CreateModelMixin,
                    GenericViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            # Суперпользователь видит все заказы
+            return qs
+        # Простой пользователь видит только свои заказы (пользователь user_admin)
+        return qs.filter(user_admin=request.user)
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.user_admin = request.user  # Привязать заказ к текущему пользователю
+        obj.save()
     @action(detail=True, methods=['post'])
     def update_status(self, request, pk=None):
         """Обновление статуса заказа"""
