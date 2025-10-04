@@ -37,28 +37,79 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    # При создании принимаем product в виде ID (PrimaryKeyRelatedField)
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
     product_name = serializers.CharField(source='product.name', read_only=True)
-    total_price = serializers.IntegerField(read_only=True)
-    
+    total_price = serializers.SerializerMethodField()
+
     class Meta:
         model = OrderItem
-        fields = '__all__'
+        fields = ['id', 'product', 'product_name', 'quantity', 'price_at_time_of_order', 'total_price']
+
+    def get_total_price(self, obj):
+        return obj.quantity * obj.price_at_time_of_order
 
 class OrderSerializer(serializers.ModelSerializer):
-    user_username = serializers.CharField(source='user.username', read_only=True)
+    user_username = serializers.CharField(source='user.user.username', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
-    items = OrderItemSerializer(many=True, read_only=True)
-    def create(self, validated_data): 
-        # когда в api создается сериалайзер, 
-        # то заполняется специальное поле сериалайзера которое называется context
-        # в него добавляется инфомрация по запросе, и доступна эта инфа
-        # через self.context['request'], в частности там есть информация о пользовате
-        if 'request' in self.context:
-            # заполняем validated_data который используется для создания сущности в БД
-            # данными из запроса
-            validated_data['user_admin'] = self.context['request'].user
-            
-        return super().create(validated_data)
+    items = OrderItemSerializer(many=True)  # writable nested serializer
+
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ['id', 'user_admin', 'user', 'user_username', 'status', 'status_display', 'total_amount', 'created_at', 'updated_at', 'items']
+
+    def create(self, validated_data):
+        print("Create Order called")
+        items_data = validated_data.pop('items', [])
+        request = self.context.get('request')
+        user = request.user
+        profile = user.profile
+
+        validated_data.pop('user', None)
+        validated_data.pop('user_admin', None)
+
+        order = Order.objects.create(user_admin=user, user=profile, **validated_data)
+        print(f"Order created with id={order.id}")
+
+        total_amount = 0
+        for item_data in items_data:
+            product = item_data['product']
+            quantity = item_data['quantity']
+            price = product.price
+            OrderItem.objects.create(
+                order=order,
+                product=product,
+                quantity=quantity,
+                price_at_time_of_order=price
+        )
+            total_amount += price * quantity
+            print(f"OrderItem added: product id {product.id}, quantity {quantity}")
+        order.total_amount = total_amount
+        order.save()
+        print(f"Order total_amount updated: {total_amount}")
+        return order
+
+    def update(self, instance, validated_data):
+        # Решение для обновления заказа и позиций — optional
+        items_data = validated_data.pop('items', None)
+        instance = super().update(instance, validated_data)
+
+        if items_data is not None:
+            # Удаляем старые позиции и добавляем новые в упрощённом варианте
+            instance.items.all().delete()
+            total_amount = 0
+            for item_data in items_data:
+                product = item_data['product']
+                quantity = item_data['quantity']
+                price = product.price
+                OrderItem.objects.create(
+                    order=instance,
+                    product=product,
+                    quantity=quantity,
+                    price_at_time_of_order=price
+                )
+                total_amount += price * quantity
+            instance.total_amount = total_amount
+            instance.save()
+
+        return instance

@@ -7,6 +7,9 @@ from coffeehub.models import *
 from coffeehub.serializers import *
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import viewsets
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 # Категории
 class CategoriesViewSet(mixins.ListModelMixin,
                        mixins.RetrieveModelMixin,
@@ -69,7 +72,13 @@ class ProductCompositionsViewSet(mixins.CreateModelMixin,
         if product_id:
             queryset = queryset.filter(product_id=product_id)
         return queryset
+class CurrentUserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        profile = request.user.profile  # предполагается, что у User есть связь с Profile через OneToOne
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data)
 # Профили пользователей
 class ProfilesViewSet(mixins.CreateModelMixin,mixins.RetrieveModelMixin,mixins.DestroyModelMixin,
                      mixins.UpdateModelMixin,
@@ -85,19 +94,25 @@ class ProfilesViewSet(mixins.CreateModelMixin,mixins.RetrieveModelMixin,mixins.D
             return Profile.objects.filter(user=user)
 # Заказы
 class OrdersViewSet(mixins.CreateModelMixin,
-                   mixins.UpdateModelMixin,
-                   mixins.RetrieveModelMixin,
-                   mixins.ListModelMixin,mixins.DestroyModelMixin,
-                   GenericViewSet):
+                    mixins.UpdateModelMixin,
+                    mixins.RetrieveModelMixin,
+                    mixins.ListModelMixin,
+                    mixins.DestroyModelMixin,
+                    GenericViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            # Суперпользователь видит все заказы
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.request.user.is_superuser:
             return qs
-        # Простой пользователь видит только свои заказы (пользователь user_admin)
-        return qs.filter(user_admin=request.user)
+        return qs.filter(user_admin=self.request.user)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
 
     def save_model(self, request, obj, form, change):
         if not change:

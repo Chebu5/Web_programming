@@ -1,5 +1,5 @@
 from django.contrib import admin
-from coffeehub.models import Product,Category,Order,Profile
+from coffeehub.models import Product,Category,Order,Profile,OrderItem
 
 # Register your models here.
 @admin.register(Product)
@@ -11,7 +11,7 @@ class ProductAdmin(admin.ModelAdmin):
 class CategoryAdmin(admin.ModelAdmin):
     list_display=['id','name']
 @admin.register(Order)
-class OrederAdmin(admin.ModelAdmin):
+class OrderAdmin(admin.ModelAdmin):
     list_display=[field.name for field in Order._meta.get_fields() if field.concrete and not field.many_to_many]
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -42,3 +42,6 @@ class ProfileAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         return qs.filter(user=request.user)
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in OrderItem._meta.fields]
